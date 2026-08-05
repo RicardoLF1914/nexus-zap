@@ -1,0 +1,24 @@
+{
+  "name": "nexus-zap",
+  "version": "0.1.0",
+  "description": "CRM de WhatsApp — NexusZap",
+  "main": "dist/backend/server.js",
+  "scripts": {
+    "dev": "tsx watch src/backend/server.ts",
+    "build": "tsc",
+    "start": "node dist/backend/server.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "license": "UNLICENSED",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.10",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  }
+}
