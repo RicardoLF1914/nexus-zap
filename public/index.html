@@ -4,9 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NexusZap</title>
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/chat.css" />
+  <link rel="stylesheet" href="css/crm.css" />
+  <style>
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--col-list-width) 1fr var(--col-crm-width);
+      height: 100vh;
+    }
+
+    .list-column {
+      background-color: var(--bg-panel);
+      border-right: 1px solid var(--border-subtle);
+      height: 100%;
+      overflow-y: auto;
+    }
+  </style>
 </head>
 <body>
-  <h1>NexusZap</h1>
-  <p>Servidor no ar.</p>
+  <div class="app-shell">
+    <aside class="list-column"></aside>
+    <main class="chat-column">
+      <header class="chat-column__header"></header>
+      <div class="chat-column__messages"></div>
+      <footer class="chat-column__composer"></footer>
+    </main>
+    <aside class="crm-column">
+      <header class="crm-column__header"></header>
+      <div class="crm-column__body"></div>
+    </aside>
+  </div>
 </body>
 </html>
