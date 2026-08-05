@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "kit-mcp": {
+      "command": "npx",
+      "args": ["-y", "@luanpdd/kit-mcp"]
+    }
+  }
+}
