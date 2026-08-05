@@ -1,0 +1,26 @@
+:root {
+  /* Identidade NexusZap */
+  --primary-color: #00A884;       /* Verde WhatsApp Ação */
+  --primary-dark: #075E54;        /* Verde Escuro */
+  --nexus-accent: #8B5CF6;        /* Roxo Nexus (Diferencial CRM) */
+
+  /* Dark Mode Defaults */
+  --bg-app: #0B141A;
+  --bg-panel: #111B21;
+  --bg-card: #202C33;
+  --bg-chat: #0B141A;
+
+  /* Textos */
+  --text-primary: #E9EDEF;
+  --text-secondary: #8696A0;
+
+  /* Tags de CRM */
+  --tag-lead: #0284C7;            /* Azul */
+  --tag-proposta: #F59E0B;        /* Amarelo */
+  --tag-fechado: #10B981;         /* Verde */
+
+  /* Layout */
+  --col-list-width: 340px;
+  --col-crm-width: 320px;
+  --border-subtle: #2A3942;
+}
