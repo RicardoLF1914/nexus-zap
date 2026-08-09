@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/backend/server.ts",
     "build": "tsc",
+    "build:frontend": "tsc -p tsconfig.frontend.json",
     "start": "node dist/backend/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.frontend.json"
   },
   "keywords": [],
   "license": "UNLICENSED",
