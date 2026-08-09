@@ -1,4 +1,5 @@
 import express, { type Request, type Response } from "express";
+import wagoRoutes from "./routes/wagoRoutes";
 import path from "path";
 import dotenv from "dotenv";
 
@@ -17,3 +18,5 @@ app.get("/health", (_req: Request, res: Response) => {
 app.listen(PORT, () => {
   console.log(`NexusZap server rodando em http://localhost:${PORT}`);
 });
+
+app.use("/api/wago", wagoRoutes);
