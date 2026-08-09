@@ -1,0 +1,61 @@
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal--open {
+  display: flex;
+}
+
+.modal__content {
+  background-color: var(--bg-card);
+  border-radius: 8px;
+  padding: 24px;
+  width: 320px;
+  text-align: center;
+}
+
+.modal__title {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.modal__qr {
+  width: 240px;
+  height: 240px;
+  background-color: #fff;
+  border-radius: 4px;
+  object-fit: contain;
+  margin: 0 auto 16px;
+  display: block;
+}
+
+.modal__close {
+  margin-top: 12px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  background-color: var(--bg-panel);
+  color: var(--text-primary);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.status-badge--connected {
+  background-color: var(--tag-fechado);
+  color: #fff;
+}
+
+.status-badge--disconnected {
+  background-color: var(--border-subtle);
+  color: var(--text-secondary);
+}

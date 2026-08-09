@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="css/global.css" />
   <link rel="stylesheet" href="css/chat.css" />
   <link rel="stylesheet" href="css/crm.css" />
+  <link rel="stylesheet" href="css/modal.css" />
   <style>
     .app-shell {
       display: grid;
@@ -20,12 +21,27 @@
       border-right: 1px solid var(--border-subtle);
       height: 100%;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .list-column__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border-bottom: 1px solid var(--border-subtle);
     }
   </style>
 </head>
 <body>
   <div class="app-shell">
-    <aside class="list-column"></aside>
+    <aside class="list-column">
+      <div class="list-column__header">
+        <span id="wago-status-badge" class="status-badge status-badge--disconnected">Desconectado</span>
+        <button id="open-wago-modal">Conectar WhatsApp</button>
+      </div>
+    </aside>
     <main class="chat-column">
       <header class="chat-column__header"></header>
       <div class="chat-column__messages"></div>
@@ -36,5 +52,15 @@
       <div class="crm-column__body"></div>
     </aside>
   </div>
+
+  <div id="wago-modal" class="modal">
+    <div class="modal__content">
+      <p class="modal__title">Escaneie o QR Code com o WhatsApp</p>
+      <img id="wago-qr-image" class="modal__qr" alt="QR Code de conexão" />
+      <button id="close-wago-modal" class="modal__close">Fechar</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
