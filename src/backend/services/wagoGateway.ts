@@ -86,3 +86,42 @@ export async function getQrCodeBase64(): Promise<string> {
   const buffer = Buffer.from(await res.arrayBuffer());
   return `data:image/png;base64,${buffer.toString("base64")}`;
 }
+
+export async function configureWebhook(webhookUrl: string): Promise<void> {
+  const { apiUrl, sessionName } = config();
+  const res = await fetch(`${apiUrl}/api/sessions/${sessionName}`, {
+    method: "PUT",
+    headers: headers(),
+    body: JSON.stringify({
+      config: {
+        webhooks: [{ url: webhookUrl, events: ["message", "message.ack"] }],
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Falha ao configurar webhook: ${res.status}`);
+  }
+}
+
+export async function sendText(
+  phone: string,
+  text: string,
+): Promise<{ id: string }> {
+  const { apiUrl, sessionName } = config();
+  const res = await fetch(`${apiUrl}/api/sendText`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      session: sessionName,
+      chatId: `${phone}@c.us`,
+      text,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Falha ao enviar mensagem: ${res.status}`);
+  }
+
+  return (await res.json()) as { id: string };
+}
