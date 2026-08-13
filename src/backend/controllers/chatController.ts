@@ -53,6 +53,26 @@ export async function listMensagensHandler(req: Request, res: Response) {
   }
 }
 
+function extrairTelefoneDoPayload(payload: {
+  from?: string;
+  _data?: { key?: { remoteJidAlt?: string } };
+}): string {
+  const from = payload.from ?? "";
+
+  if (from.endsWith("@c.us")) {
+    return from.replace("@c.us", "");
+  }
+
+  // Contato migrado para @lid — o número real vem em remoteJidAlt
+  const remoteJidAlt = payload._data?.key?.remoteJidAlt;
+  if (remoteJidAlt && remoteJidAlt.endsWith("@s.whatsapp.net")) {
+    return remoteJidAlt.replace("@s.whatsapp.net", "");
+  }
+
+  // Último recurso: usa o que vier antes do @, mesmo que seja o LID
+  return from.split("@")[0];
+}
+
 // Recebe eventos do WAHA quando uma mensagem chega
 export async function webhookHandler(req: Request, res: Response) {
   try {
@@ -64,11 +84,17 @@ export async function webhookHandler(req: Request, res: Response) {
         fromMe?: boolean;
         id?: string;
         ack?: number;
+        _data?: { key?: { remoteJidAlt?: string } };
       };
     };
 
-    if (event.event === "message" && event.payload && !event.payload.fromMe) {
-      const telefone = (event.payload.from ?? "").replace("@c.us", "");
+    if (
+      event.event === "message" &&
+      event.payload &&
+      !event.payload.fromMe &&
+      !(event.payload.from ?? "").endsWith("@g.us")
+    ) {
+      const telefone = extrairTelefoneDoPayload(event.payload);
       const texto = event.payload.body ?? "";
 
       if (telefone && texto) {
