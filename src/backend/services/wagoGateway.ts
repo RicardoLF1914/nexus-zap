@@ -104,17 +104,41 @@ export async function configureWebhook(webhookUrl: string): Promise<void> {
   }
 }
 
+export async function checkNumberExists(
+  phone: string,
+): Promise<{ exists: boolean; chatId: string | null }> {
+  const { apiUrl, sessionName } = config();
+  const res = await fetch(
+    `${apiUrl}/api/contacts/check-exists?phone=${phone}&session=${sessionName}`,
+    { headers: headers() },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Falha ao checar número: ${res.status}`);
+  }
+
+  const data = (await res.json()) as { numberExists: boolean; chatId: string | null };
+  return { exists: data.numberExists, chatId: data.chatId };
+}
+
 export async function sendText(
   phone: string,
   text: string,
 ): Promise<{ id: string }> {
   const { apiUrl, sessionName } = config();
+
+  const { exists, chatId } = await checkNumberExists(phone);
+
+  if (!exists || !chatId) {
+    throw new Error(`Número não encontrado no WhatsApp: ${phone}`);
+  }
+
   const res = await fetch(`${apiUrl}/api/sendText`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({
       session: sessionName,
-      chatId: `${phone}@c.us`,
+      chatId,
       text,
     }),
   });
