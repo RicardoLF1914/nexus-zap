@@ -149,3 +149,62 @@ export async function sendText(
 
   return (await res.json()) as { id: string };
 }
+
+export async function sendImage(
+  phone: string,
+  imageUrl: string,
+  caption?: string,
+): Promise<{ id: string }> {
+  const { apiUrl, sessionName } = config();
+  const { exists, chatId } = await checkNumberExists(phone);
+
+  if (!exists || !chatId) {
+    throw new Error(`Número não encontrado no WhatsApp: ${phone}`);
+  }
+
+  const res = await fetch(`${apiUrl}/api/sendImage`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      session: sessionName,
+      chatId,
+      file: { url: imageUrl },
+      caption: caption ?? "",
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Falha ao enviar imagem: ${res.status}`);
+  }
+
+  return (await res.json()) as { id: string };
+}
+
+export async function sendFile(
+  phone: string,
+  fileUrl: string,
+  filename: string,
+): Promise<{ id: string }> {
+  const { apiUrl, sessionName } = config();
+  const { exists, chatId } = await checkNumberExists(phone);
+
+  if (!exists || !chatId) {
+    throw new Error(`Número não encontrado no WhatsApp: ${phone}`);
+  }
+
+  const res = await fetch(`${apiUrl}/api/sendFile`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      session: sessionName,
+      chatId,
+      file: { url: fileUrl, filename },
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Falha ao enviar arquivo: ${res.status}`);
+  }
+
+  return (await res.json()) as { id: string };
+}

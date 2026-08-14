@@ -51,6 +51,7 @@ export async function salvarMensagem(params: {
   tipo: MensagemTipo;
   conteudo: string;
   wago_message_id?: string;
+  midia_url?: string;
 }): Promise<Mensagem> {
   const supabase = getSupabaseClient();
 
@@ -61,6 +62,7 @@ export async function salvarMensagem(params: {
       direcao: params.direcao,
       tipo: params.tipo,
       conteudo: params.conteudo,
+      midia_url: params.midia_url ?? null,
       wago_message_id: params.wago_message_id ?? null,
       status: params.direcao === "saida" ? "enviado" : "entregue",
     })
@@ -124,4 +126,22 @@ export async function atualizarStatusPorAck(
     .eq("id", atual.id);
 
   if (updateError) throw updateError;
+}
+
+export async function uploadMidia(
+  buffer: Buffer,
+  nomeArquivo: string,
+  contentType: string,
+): Promise<string> {
+  const supabase = getSupabaseClient();
+  const caminho = `${Date.now()}-${nomeArquivo}`;
+
+  const { error } = await supabase.storage
+    .from("Midias")
+    .upload(caminho, buffer, { contentType });
+
+  if (error) throw error;
+
+  const { data } = supabase.storage.from("Midias").getPublicUrl(caminho);
+  return data.publicUrl;
 }

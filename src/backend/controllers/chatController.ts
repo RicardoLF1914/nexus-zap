@@ -1,3 +1,5 @@
+import { uploadMidia } from "../services/supabaseService.js";
+import { sendImage, sendFile } from "../services/wagoGateway.js";
 import { atualizarStatusPorAck } from "../services/supabaseService.js";
 import type { Request, Response } from "express";
 import { sendText } from "../services/wagoGateway.js";
@@ -124,5 +126,37 @@ export async function webhookHandler(req: Request, res: Response) {
   } catch (err) {
     console.error("Erro ao processar webhook:", err);
     res.json({ received: true, error: (err as Error).message });
+  }
+}
+
+export async function sendMediaHandler(req: Request, res: Response) {
+  try {
+    const file = req.file;
+    const { telefone, legenda } = req.body as { telefone: string; legenda?: string };
+
+    if (!file || !telefone) {
+      res.status(400).json({ error: "arquivo e telefone são obrigatórios" });
+      return;
+    }
+
+    const url = await uploadMidia(file.buffer, file.originalname, file.mimetype);
+    const isImagem = file.mimetype.startsWith("image/");
+
+    const contato = await findOrCreateContato(telefone);
+    const wagoResult = isImagem
+      ? await sendImage(telefone, url, legenda)
+      : await sendFile(telefone, url, file.originalname);
+
+    const mensagem = await salvarMensagem({
+      contato_id: contato.id,
+      direcao: "saida",
+      tipo: isImagem ? "imagem" : "documento",
+      conteudo: legenda ?? file.originalname,
+      wago_message_id: wagoResult.id,
+    });
+
+    res.json({ mensagem, url });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
   }
 }
