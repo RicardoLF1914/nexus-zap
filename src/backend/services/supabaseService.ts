@@ -128,13 +128,22 @@ export async function atualizarStatusPorAck(
   if (updateError) throw updateError;
 }
 
+function sanitizeFileName(nome: string): string {
+  return nome
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .replace(/[^a-zA-Z0-9._-]/g, "-") // troca qualquer caractere não permitido por hífen
+    .replace(/-+/g, "-"); // colapsa hífens repetidos
+}
+
 export async function uploadMidia(
   buffer: Buffer,
   nomeArquivo: string,
   contentType: string,
 ): Promise<string> {
   const supabase = getSupabaseClient();
-  const caminho = `${Date.now()}-${nomeArquivo}`;
+  const nomeSeguro = sanitizeFileName(nomeArquivo);
+  const caminho = `${Date.now()}-${nomeSeguro}`;
 
   const { error } = await supabase.storage
     .from("Midias")
