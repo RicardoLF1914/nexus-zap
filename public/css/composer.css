@@ -1,0 +1,69 @@
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  min-height: 62px;
+}
+
+.composer__telefone-input {
+  width: 140px;
+  padding: 8px;
+  background-color: var(--bg-card);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.composer__text-input {
+  flex: 1;
+  padding: 10px 14px;
+  background-color: var(--bg-card);
+  border-radius: 20px;
+  color: var(--text-primary);
+}
+
+.composer__attach-btn,
+.composer__send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.composer__attach-btn {
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+}
+
+.composer__preview {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.composer__preview--visible {
+  display: flex;
+}
+
+.composer__preview-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.composer__preview-remove {
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-decoration: underline;
+}

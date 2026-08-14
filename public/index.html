@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/chat.css" />
   <link rel="stylesheet" href="css/crm.css" />
   <link rel="stylesheet" href="css/modal.css" />
+  <link rel="stylesheet" href="css/composer.css" />
   <style>
     .app-shell {
       display: grid;
@@ -45,7 +46,30 @@
     <main class="chat-column">
       <header class="chat-column__header"></header>
       <div class="chat-column__messages"></div>
-      <footer class="chat-column__composer"></footer>
+      <footer class="chat-column__composer">
+        <div id="composer-preview" class="composer__preview">
+          <img id="composer-preview-thumb" class="composer__preview-thumb" alt="Preview" />
+          <span id="composer-preview-name"></span>
+          <button id="composer-preview-remove" class="composer__preview-remove">Remover</button>
+        </div>
+        <div class="composer">
+          <input
+            id="composer-telefone"
+            class="composer__telefone-input"
+            type="text"
+            placeholder="Telefone destino"
+          />
+          <button id="composer-attach-btn" class="composer__attach-btn">📎</button>
+          <input id="composer-file-input" type="file" style="display: none" accept="image/*,application/pdf" />
+          <input
+            id="composer-text-input"
+            class="composer__text-input"
+            type="text"
+            placeholder="Digite uma mensagem"
+          />
+          <button id="composer-send-btn" class="composer__send-btn">➤</button>
+        </div>
+      </footer>
     </main>
     <aside class="crm-column">
       <header class="crm-column__header"></header>

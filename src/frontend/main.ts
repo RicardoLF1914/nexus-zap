@@ -1,3 +1,5 @@
+import { sendMessage, sendMedia } from "./services/api.js";
+import { criarUploaderDeMidia, type ArquivoSelecionado } from "./components/mediaUploader.js";
 import { connectWhatsapp, getStatus, getQrCode, type SessionInfo } from "./services/api.js";
 
 const modal = document.getElementById("wago-modal") as HTMLDivElement;
@@ -62,3 +64,72 @@ closeModalBtn.addEventListener("click", closeModal);
 getStatus()
   .then((session) => setStatusBadge(session.status))
   .catch(() => setStatusBadge("STOPPED" as SessionInfo["status"]));
+
+const telefoneInput = document.getElementById("composer-telefone") as HTMLInputElement;
+const textInput = document.getElementById("composer-text-input") as HTMLInputElement;
+const sendBtn = document.getElementById("composer-send-btn") as HTMLButtonElement;
+const attachBtn = document.getElementById("composer-attach-btn") as HTMLButtonElement;
+const fileInput = document.getElementById("composer-file-input") as HTMLInputElement;
+const previewBox = document.getElementById("composer-preview") as HTMLDivElement;
+const previewThumb = document.getElementById("composer-preview-thumb") as HTMLImageElement;
+const previewName = document.getElementById("composer-preview-name") as HTMLSpanElement;
+const previewRemove = document.getElementById("composer-preview-remove") as HTMLButtonElement;
+
+let arquivoAtual: ArquivoSelecionado | null = null;
+
+criarUploaderDeMidia(fileInput, (arquivo) => {
+  arquivoAtual = arquivo;
+
+  if (arquivo) {
+    previewBox.classList.add("composer__preview--visible");
+    previewName.textContent = arquivo.file.name;
+    if (arquivo.file.type.startsWith("image/")) {
+      previewThumb.src = arquivo.previewUrl;
+      previewThumb.style.display = "block";
+    } else {
+      previewThumb.style.display = "none";
+    }
+  } else {
+    previewBox.classList.remove("composer__preview--visible");
+  }
+});
+
+attachBtn.addEventListener("click", () => fileInput.click());
+
+previewRemove.addEventListener("click", () => {
+  fileInput.value = "";
+  arquivoAtual = null;
+  previewBox.classList.remove("composer__preview--visible");
+});
+
+async function enviar() {
+  const telefone = telefoneInput.value.trim();
+  const texto = textInput.value.trim();
+
+  if (!telefone) {
+    alert("Informe o telefone de destino");
+    return;
+  }
+
+  try {
+    if (arquivoAtual) {
+      await sendMedia(telefone, arquivoAtual.file, texto);
+      fileInput.value = "";
+      arquivoAtual = null;
+      previewBox.classList.remove("composer__preview--visible");
+    } else if (texto) {
+      await sendMessage(telefone, texto);
+    } else {
+      return;
+    }
+
+    textInput.value = "";
+  } catch {
+    alert("Falha ao enviar. Tente novamente.");
+  }
+}
+
+sendBtn.addEventListener("click", enviar);
+textInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") enviar();
+});
