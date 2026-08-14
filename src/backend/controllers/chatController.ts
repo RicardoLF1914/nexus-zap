@@ -1,14 +1,32 @@
-import { uploadMidia } from "../services/supabaseService.js";
-import { sendImage, sendFile } from "../services/wagoGateway.js";
-import { atualizarStatusPorAck } from "../services/supabaseService.js";
 import type { Request, Response } from "express";
-import { sendText } from "../services/wagoGateway.js";
+import { sendText, sendImage, sendFile, downloadMedia } from "../services/wagoGateway.js";
 import {
   findOrCreateContato,
   salvarMensagem,
   listarContatos,
   listarMensagens,
+  uploadMidia,
 } from "../services/supabaseService.js";
+
+function extrairTelefoneDoPayload(payload: {
+  from?: string;
+  _data?: { key?: { remoteJidAlt?: string } };
+}): string {
+  const from = payload.from ?? "";
+
+  if (from.endsWith("@c.us")) {
+    return from.replace("@c.us", "");
+  }
+
+  // Contato migrado para @lid — o número real vem em remoteJidAlt
+  const remoteJidAlt = payload._data?.key?.remoteJidAlt;
+  if (remoteJidAlt && remoteJidAlt.endsWith("@s.whatsapp.net")) {
+    return remoteJidAlt.replace("@s.whatsapp.net", "");
+  }
+
+  // Último recurso: usa o que vier antes do @, mesmo que seja o LID
+  return from.split("@")[0];
+}
 
 export async function sendMessageHandler(req: Request, res: Response) {
   try {
@@ -36,99 +54,6 @@ export async function sendMessageHandler(req: Request, res: Response) {
   }
 }
 
-export async function listContatosHandler(_req: Request, res: Response) {
-  try {
-    const contatos = await listarContatos();
-    res.json({ contatos });
-  } catch (err) {
-    res.status(500).json({ error: (err as Error).message });
-  }
-}
-
-export async function listMensagensHandler(req: Request, res: Response) {
-  try {
-    const { contatoId } = req.params as { contatoId: string };
-    const mensagens = await listarMensagens(contatoId);
-    res.json({ mensagens });
-  } catch (err) {
-    res.status(500).json({ error: (err as Error).message });
-  }
-}
-
-function extrairTelefoneDoPayload(payload: {
-  from?: string;
-  _data?: { key?: { remoteJidAlt?: string } };
-}): string {
-  const from = payload.from ?? "";
-
-  if (from.endsWith("@c.us")) {
-    return from.replace("@c.us", "");
-  }
-
-  // Contato migrado para @lid — o número real vem em remoteJidAlt
-  const remoteJidAlt = payload._data?.key?.remoteJidAlt;
-  if (remoteJidAlt && remoteJidAlt.endsWith("@s.whatsapp.net")) {
-    return remoteJidAlt.replace("@s.whatsapp.net", "");
-  }
-
-  // Último recurso: usa o que vier antes do @, mesmo que seja o LID
-  return from.split("@")[0];
-}
-
-// Recebe eventos do WAHA quando uma mensagem chega
-export async function webhookHandler(req: Request, res: Response) {
-  try {
-    const event = req.body as {
-      event: string;
-      payload?: {
-        from?: string;
-        body?: string;
-        fromMe?: boolean;
-        id?: string;
-        ack?: number;
-        _data?: { key?: { remoteJidAlt?: string } };
-      };
-    };
-
-    if (
-      event.event === "message" &&
-      event.payload &&
-      !event.payload.fromMe &&
-      !(event.payload.from ?? "").endsWith("@g.us")
-    ) {
-      const telefone = extrairTelefoneDoPayload(event.payload);
-      const texto = event.payload.body ?? "";
-
-      if (telefone && texto) {
-        const contato = await findOrCreateContato(telefone);
-        await salvarMensagem({
-          contato_id: contato.id,
-          direcao: "entrada",
-          tipo: "texto",
-          conteudo: texto,
-          wago_message_id: event.payload.id,
-        });
-      }
-    }
-
-    if (event.event === "message.ack" && event.payload?.id && event.payload.ack !== undefined) {
-      const ack = event.payload.ack;
-
-      if (ack >= 3) {
-        await atualizarStatusPorAck(event.payload.id, "lido");
-      } else if (ack >= 2) {
-        await atualizarStatusPorAck(event.payload.id, "entregue");
-      }
-      // ack === 1 (enviado ao servidor) não precisa de ação — já é o status inicial
-    }
-
-    res.json({ received: true });
-  } catch (err) {
-    console.error("Erro ao processar webhook:", err);
-    res.json({ received: true, error: (err as Error).message });
-  }
-}
-
 export async function sendMediaHandler(req: Request, res: Response) {
   try {
     const file = req.file;
@@ -153,10 +78,101 @@ export async function sendMediaHandler(req: Request, res: Response) {
       tipo: isImagem ? "imagem" : "documento",
       conteudo: legenda ?? file.originalname,
       wago_message_id: wagoResult.id,
+      midia_url: url,
     });
 
     res.json({ mensagem, url });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
+  }
+}
+
+export async function listContatosHandler(_req: Request, res: Response) {
+  try {
+    const contatos = await listarContatos();
+    res.json({ contatos });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+}
+
+export async function listMensagensHandler(req: Request, res: Response) {
+  try {
+    const { contatoId } = req.params as { contatoId: string };
+    const mensagens = await listarMensagens(contatoId);
+    res.json({ mensagens });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+}
+
+// Recebe eventos do WAHA quando uma mensagem chega
+export async function webhookHandler(req: Request, res: Response) {
+  try {
+    const event = req.body as {
+      event: string;
+      payload?: {
+        from?: string;
+        body?: string;
+        fromMe?: boolean;
+        id?: string;
+        ack?: number;
+        hasMedia?: boolean;
+        media?: { url?: string; filename?: string };
+        _data?: { key?: { remoteJidAlt?: string } };
+      };
+    };
+
+    if (
+      event.event === "message" &&
+      event.payload &&
+      !event.payload.fromMe &&
+      !(event.payload.from ?? "").endsWith("@g.us")
+    ) {
+      const telefone = extrairTelefoneDoPayload(event.payload);
+      const contato = await findOrCreateContato(telefone);
+
+      if (event.payload.hasMedia && event.payload.media?.url) {
+        const { buffer, contentType } = await downloadMedia(event.payload.media.url);
+        const nomeArquivo = event.payload.media.filename ?? `midia-${Date.now()}`;
+        const url = await uploadMidia(buffer, nomeArquivo, contentType);
+
+        await salvarMensagem({
+          contato_id: contato.id,
+          direcao: "entrada",
+          tipo: contentType.startsWith("image/") ? "imagem" : "documento",
+          conteudo: event.payload.body ?? "",
+          wago_message_id: event.payload.id,
+          midia_url: url,
+        });
+      } else {
+        const texto = event.payload.body ?? "";
+        if (texto) {
+          await salvarMensagem({
+            contato_id: contato.id,
+            direcao: "entrada",
+            tipo: "texto",
+            conteudo: texto,
+            wago_message_id: event.payload.id,
+          });
+        }
+      }
+    }
+
+    if (event.event === "message.ack" && event.payload?.id && event.payload.ack !== undefined) {
+      const { atualizarStatusPorAck } = await import("../services/supabaseService.js");
+      const ack = event.payload.ack;
+
+      if (ack >= 3) {
+        await atualizarStatusPorAck(event.payload.id, "lido");
+      } else if (ack >= 2) {
+        await atualizarStatusPorAck(event.payload.id, "entregue");
+      }
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error("Erro ao processar webhook:", err);
+    res.json({ received: true, error: (err as Error).message });
   }
 }

@@ -208,3 +208,20 @@ export async function sendFile(
 
   return (await res.json()) as { id: string };
 }
+
+export async function downloadMedia(
+  mediaUrl: string,
+): Promise<{ buffer: Buffer; contentType: string }> {
+  const { apiUrl } = config();
+  const caminho = new URL(mediaUrl).pathname;
+  const urlReal = `${apiUrl}${caminho}`;
+
+  const res = await fetch(urlReal, { headers: headers() });
+  if (!res.ok) {
+    throw new Error(`Falha ao baixar mídia: ${res.status}`);
+  }
+
+  const contentType = res.headers.get("content-type") ?? "application/octet-stream";
+  const buffer = Buffer.from(await res.arrayBuffer());
+  return { buffer, contentType };
+}
