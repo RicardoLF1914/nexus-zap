@@ -67,3 +67,34 @@
   font-size: 13px;
   text-decoration: underline;
 }
+
+.composer__mic-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.composer__mic-btn--recording {
+  background-color: #ef4444;
+  color: white;
+}
+
+.composer__audio-preview {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.composer__audio-preview--visible {
+  display: flex;
+}

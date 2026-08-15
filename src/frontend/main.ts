@@ -1,3 +1,4 @@
+import { criarGravadorDeAudio, type GravacaoConcluida } from "./components/audioRecorder.js";
 import { sendMessage, sendMedia } from "./services/api.js";
 import { criarUploaderDeMidia, type ArquivoSelecionado } from "./components/mediaUploader.js";
 import { connectWhatsapp, getStatus, getQrCode, type SessionInfo } from "./services/api.js";
@@ -112,7 +113,12 @@ async function enviar() {
   }
 
   try {
-    if (arquivoAtual) {
+    if (gravacaoAtual) {
+      const audioFile = new File([gravacaoAtual.blob], "audio.webm", { type: "audio/webm" });
+      await sendMedia(telefone, audioFile, "");
+      gravacaoAtual = null;
+      audioPreviewBox.classList.remove("composer__audio-preview--visible");
+    } else if (arquivoAtual) {
       await sendMedia(telefone, arquivoAtual.file, texto);
       fileInput.value = "";
       arquivoAtual = null;
@@ -132,4 +138,42 @@ async function enviar() {
 sendBtn.addEventListener("click", enviar);
 textInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") enviar();
+});
+
+const micBtn = document.getElementById("composer-mic-btn") as HTMLButtonElement;
+const audioPreviewBox = document.getElementById("composer-audio-preview") as HTMLDivElement;
+const audioPlayer = document.getElementById("composer-audio-player") as HTMLAudioElement;
+const audioRemoveBtn = document.getElementById("composer-audio-remove") as HTMLButtonElement;
+
+let gravacaoAtual: GravacaoConcluida | null = null;
+let gravando = false;
+
+const gravador = criarGravadorDeAudio(
+  (gravacao) => {
+    gravacaoAtual = gravacao;
+    audioPlayer.src = gravacao.url;
+    audioPreviewBox.classList.add("composer__audio-preview--visible");
+  },
+  () => {
+    alert("Não foi possível acessar o microfone.");
+    gravando = false;
+    micBtn.classList.remove("composer__mic-btn--recording");
+  },
+);
+
+micBtn.addEventListener("click", async () => {
+  if (gravando) {
+    gravador.parar();
+    gravando = false;
+    micBtn.classList.remove("composer__mic-btn--recording");
+  } else {
+    await gravador.iniciar();
+    gravando = true;
+    micBtn.classList.add("composer__mic-btn--recording");
+  }
+});
+
+audioRemoveBtn.addEventListener("click", () => {
+  gravacaoAtual = null;
+  audioPreviewBox.classList.remove("composer__audio-preview--visible");
 });
