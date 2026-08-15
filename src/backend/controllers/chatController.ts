@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { sendText, sendImage, sendFile, downloadMedia } from "../services/wagoGateway.js";
+import { sendText, sendImage, sendFile, downloadMedia, sendVoice } from "../services/wagoGateway.js";
 import {
   findOrCreateContato,
   salvarMensagem,
@@ -66,16 +66,28 @@ export async function sendMediaHandler(req: Request, res: Response) {
 
     const url = await uploadMidia(file.buffer, file.originalname, file.mimetype);
     const isImagem = file.mimetype.startsWith("image/");
+    const isAudio = file.mimetype.startsWith("audio/");
 
     const contato = await findOrCreateContato(telefone);
-    const wagoResult = isImagem
-      ? await sendImage(telefone, url, legenda)
-      : await sendFile(telefone, url, file.originalname);
+
+    let wagoResult: { id: string };
+    let tipo: "imagem" | "documento" | "audio";
+
+    if (isAudio) {
+      wagoResult = await sendVoice(telefone, url);
+      tipo = "audio";
+    } else if (isImagem) {
+      wagoResult = await sendImage(telefone, url, legenda);
+      tipo = "imagem";
+    } else {
+      wagoResult = await sendFile(telefone, url, file.originalname);
+      tipo = "documento";
+    }
 
     const mensagem = await salvarMensagem({
       contato_id: contato.id,
       direcao: "saida",
-      tipo: isImagem ? "imagem" : "documento",
+      tipo,
       conteudo: legenda ?? file.originalname,
       wago_message_id: wagoResult.id,
       midia_url: url,
