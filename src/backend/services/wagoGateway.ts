@@ -225,3 +225,32 @@ export async function downloadMedia(
   const buffer = Buffer.from(await res.arrayBuffer());
   return { buffer, contentType };
 }
+
+export async function sendVoice(
+  phone: string,
+  audioUrl: string,
+): Promise<{ id: string }> {
+  const { apiUrl, sessionName } = config();
+  const { exists, chatId } = await checkNumberExists(phone);
+
+  if (!exists || !chatId) {
+    throw new Error(`Número não encontrado no WhatsApp: ${phone}`);
+  }
+
+  const res = await fetch(`${apiUrl}/api/sendVoice`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      session: sessionName,
+      chatId,
+      file: { url: audioUrl, mimetype: "audio/ogg" },
+      convert: true,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Falha ao enviar áudio: ${res.status}`);
+  }
+
+  return (await res.json()) as { id: string };
+}
