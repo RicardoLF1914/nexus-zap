@@ -1,3 +1,5 @@
+import { obterLocalizacaoAtual } from "./components/locationPicker.js";
+import { sendLocationMessage, sendContactMessage } from "./services/api.js";
 import { criarGravadorDeAudio, type GravacaoConcluida } from "./components/audioRecorder.js";
 import { sendMessage, sendMedia } from "./services/api.js";
 import { criarUploaderDeMidia, type ArquivoSelecionado } from "./components/mediaUploader.js";
@@ -176,4 +178,41 @@ micBtn.addEventListener("click", async () => {
 audioRemoveBtn.addEventListener("click", () => {
   gravacaoAtual = null;
   audioPreviewBox.classList.remove("composer__audio-preview--visible");
+});
+
+const locationBtn = document.getElementById("composer-location-btn") as HTMLButtonElement;
+const contactBtn = document.getElementById("composer-contact-btn") as HTMLButtonElement;
+
+locationBtn.addEventListener("click", async () => {
+  const telefone = telefoneInput.value.trim();
+  if (!telefone) {
+    alert("Informe o telefone de destino");
+    return;
+  }
+
+  try {
+    const { latitude, longitude } = await obterLocalizacaoAtual();
+    await sendLocationMessage(telefone, latitude, longitude);
+  } catch {
+    alert("Não foi possível obter ou enviar sua localização.");
+  }
+});
+
+contactBtn.addEventListener("click", async () => {
+  const telefone = telefoneInput.value.trim();
+  if (!telefone) {
+    alert("Informe o telefone de destino");
+    return;
+  }
+
+  const contatoNome = prompt("Nome do contato:");
+  const contatoTelefone = prompt("Telefone do contato:");
+
+  if (!contatoNome || !contatoTelefone) return;
+
+  try {
+    await sendContactMessage(telefone, contatoNome, contatoTelefone);
+  } catch {
+    alert("Não foi possível enviar o contato.");
+  }
 });

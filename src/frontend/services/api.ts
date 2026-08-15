@@ -49,3 +49,29 @@ export async function sendMedia(
   });
   if (!res.ok) throw new Error("Falha ao enviar mídia");
 }
+
+export async function sendLocationMessage(
+  telefone: string,
+  latitude: number,
+  longitude: number,
+): Promise<void> {
+  const res = await fetch("/api/chat/send-location", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ telefone, latitude, longitude }),
+  });
+  if (!res.ok) throw new Error("Falha ao enviar localização");
+}
+
+export async function sendContactMessage(
+  telefone: string,
+  contatoNome: string,
+  contatoTelefone: string,
+): Promise<void> {
+  const res = await fetch("/api/chat/send-contact", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ telefone, contatoNome, contatoTelefone }),
+  });
+  if (!res.ok) throw new Error("Falha ao enviar contato");
+}
