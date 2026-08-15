@@ -3,6 +3,8 @@ import multer from "multer";
 import {
   sendMessageHandler,
   sendMediaHandler,
+  sendLocationHandler,
+  sendContactHandler,
   listContatosHandler,
   listMensagensHandler,
   webhookHandler,
@@ -17,5 +19,7 @@ router.post("/send-media", upload.single("arquivo"), sendMediaHandler);
 router.get("/contatos", listContatosHandler);
 router.get("/contatos/:contatoId/mensagens", listMensagensHandler);
 router.post("/webhook", webhookHandler);
+router.post("/send-location", sendLocationHandler);
+router.post("/send-contact", sendContactHandler);
 
 export default router;

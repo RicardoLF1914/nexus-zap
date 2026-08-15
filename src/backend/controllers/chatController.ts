@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { sendText, sendImage, sendFile, downloadMedia, sendVoice } from "../services/wagoGateway.js";
+import { sendText, sendImage, sendFile, downloadMedia, sendVoice, sendLocation, sendContactVcard } from "../services/wagoGateway.js";
 import {
   findOrCreateContato,
   salvarMensagem,
@@ -186,5 +186,66 @@ export async function webhookHandler(req: Request, res: Response) {
   } catch (err) {
     console.error("Erro ao processar webhook:", err);
     res.json({ received: true, error: (err as Error).message });
+  }
+}
+
+export async function sendLocationHandler(req: Request, res: Response) {
+  try {
+    const { telefone, latitude, longitude, titulo } = req.body as {
+      telefone: string;
+      latitude: number;
+      longitude: number;
+      titulo?: string;
+    };
+
+    if (!telefone || latitude === undefined || longitude === undefined) {
+      res.status(400).json({ error: "telefone, latitude e longitude são obrigatórios" });
+      return;
+    }
+
+    const contato = await findOrCreateContato(telefone);
+    const wagoResult = await sendLocation(telefone, latitude, longitude, titulo);
+
+    const mensagem = await salvarMensagem({
+      contato_id: contato.id,
+      direcao: "saida",
+      tipo: "localizacao",
+      conteudo: `${latitude},${longitude}`,
+      wago_message_id: wagoResult.id,
+    });
+
+    res.json({ mensagem });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+}
+
+export async function sendContactHandler(req: Request, res: Response) {
+  try {
+    const { telefone, contatoNome, contatoTelefone } = req.body as {
+      telefone: string;
+      contatoNome: string;
+      contatoTelefone: string;
+    };
+
+    if (!telefone || !contatoNome || !contatoTelefone) {
+      res.status(400).json({ error: "telefone, contatoNome e contatoTelefone são obrigatórios" });
+      return;
+    }
+
+    const contato = await findOrCreateContato(telefone);
+    const wagoResult = await sendContactVcard(telefone, contatoNome, contatoTelefone);
+
+    const mensagem = await salvarMensagem({
+      contato_id: contato.id,
+      direcao: "saida",
+      tipo: "contato",
+      conteudo: `${contatoNome} - ${contatoTelefone}`,
+      wago_message_id: wagoResult.id,
+    });
+
+    res.json({ mensagem });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
   }
 }
