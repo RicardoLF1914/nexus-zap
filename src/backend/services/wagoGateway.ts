@@ -254,3 +254,66 @@ export async function sendVoice(
 
   return (await res.json()) as { id: string };
 }
+
+export async function sendLocation(
+  phone: string,
+  latitude: number,
+  longitude: number,
+  title?: string,
+): Promise<{ id: string }> {
+  const { apiUrl, sessionName } = config();
+  const { exists, chatId } = await checkNumberExists(phone);
+
+  if (!exists || !chatId) {
+    throw new Error(`Número não encontrado no WhatsApp: ${phone}`);
+  }
+
+  const res = await fetch(`${apiUrl}/api/sendLocation`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      session: sessionName,
+      chatId,
+      latitude,
+      longitude,
+      title: title ?? "Localização compartilhada",
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Falha ao enviar localização: ${res.status}`);
+  }
+
+  return (await res.json()) as { id: string };
+}
+
+export async function sendContactVcard(
+  phone: string,
+  contatoNome: string,
+  contatoTelefone: string,
+): Promise<{ id: string }> {
+  const { apiUrl, sessionName } = config();
+  const { exists, chatId } = await checkNumberExists(phone);
+
+  if (!exists || !chatId) {
+    throw new Error(`Número não encontrado no WhatsApp: ${phone}`);
+  }
+
+  const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${contatoNome}\nTEL;type=CELL:${contatoTelefone}\nEND:VCARD`;
+
+  const res = await fetch(`${apiUrl}/api/sendContactVcard`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      session: sessionName,
+      chatId,
+      contacts: [{ vcard }],
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Falha ao enviar contato: ${res.status}`);
+  }
+
+  return (await res.json()) as { id: string };
+}
