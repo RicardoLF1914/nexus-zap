@@ -4,6 +4,16 @@ import { criarGravadorDeAudio, type GravacaoConcluida } from "./components/audio
 import { sendMessage, sendMedia } from "./services/api.js";
 import { criarUploaderDeMidia, type ArquivoSelecionado } from "./components/mediaUploader.js";
 import { connectWhatsapp, getStatus, getQrCode, type SessionInfo } from "./services/api.js";
+import {
+  carregarContato,
+  listarTodasTags,
+  criarNovaTag,
+  vincularTagAoContato,
+  desvincularTagDoContato,
+  atualizarNomeContato,
+  type TagInfo,
+  type ContatoInfo,
+} from "./components/crmPanel.js";
 
 const modal = document.getElementById("wago-modal") as HTMLDivElement;
 const qrImage = document.getElementById("wago-qr-image") as HTMLImageElement;
@@ -215,4 +225,91 @@ contactBtn.addEventListener("click", async () => {
   } catch {
     alert("Não foi possível enviar o contato.");
   }
+});
+
+const crmNomeInput = document.getElementById("crm-nome-input") as HTMLInputElement;
+const crmTelefoneDisplay = document.getElementById("crm-telefone-display") as HTMLDivElement;
+const crmTagsLista = document.getElementById("crm-tags-lista") as HTMLDivElement;
+const crmTagsDisponiveis = document.getElementById("crm-tags-disponiveis") as HTMLDivElement;
+const crmNovaTagNome = document.getElementById("crm-nova-tag-nome") as HTMLInputElement;
+const crmNovaTagCor = document.getElementById("crm-nova-tag-cor") as HTMLInputElement;
+const crmNovaTagBtn = document.getElementById("crm-nova-tag-btn") as HTMLButtonElement;
+
+let contatoAtivo: ContatoInfo | null = null;
+let tagsDoContatoAtivo: TagInfo[] = [];
+
+function renderizarTagsDoContato() {
+  crmTagsLista.innerHTML = "";
+  for (const tag of tagsDoContatoAtivo) {
+    const el = document.createElement("span");
+    el.className = "crm-tag";
+    el.style.backgroundColor = tag.cor;
+    el.innerHTML = `${tag.nome} <span class="crm-tag__remove" data-tag-id="${tag.id}">×</span>`;
+    crmTagsLista.appendChild(el);
+  }
+
+  crmTagsLista.querySelectorAll(".crm-tag__remove").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const tagId = (e.target as HTMLElement).dataset.tagId;
+      if (!tagId || !contatoAtivo) return;
+      await desvincularTagDoContato(contatoAtivo.id, tagId);
+      await recarregarPainelCrm();
+    });
+  });
+}
+
+async function renderizarTagsDisponiveis() {
+  const todasTags = await listarTodasTags();
+  const idsVinculadas = new Set(tagsDoContatoAtivo.map((t) => t.id));
+  const disponiveis = todasTags.filter((t) => !idsVinculadas.has(t.id));
+
+  crmTagsDisponiveis.innerHTML = "";
+  for (const tag of disponiveis) {
+    const el = document.createElement("span");
+    el.className = "crm-tag crm-tag--disponivel";
+    el.style.backgroundColor = tag.cor;
+    el.textContent = `+ ${tag.nome}`;
+    el.addEventListener("click", async () => {
+      if (!contatoAtivo) return;
+      await vincularTagAoContato(contatoAtivo.id, tag.id);
+      await recarregarPainelCrm();
+    });
+    crmTagsDisponiveis.appendChild(el);
+  }
+}
+
+async function recarregarPainelCrm() {
+  const telefone = telefoneInput.value.trim();
+  if (!telefone) return;
+
+  try {
+    const { contato, tags } = await carregarContato(telefone);
+    contatoAtivo = contato;
+    tagsDoContatoAtivo = tags;
+
+    crmNomeInput.value = contato.nome ?? "";
+    crmTelefoneDisplay.textContent = contato.telefone;
+
+    renderizarTagsDoContato();
+    await renderizarTagsDisponiveis();
+  } catch {
+    // contato ainda não existe ou telefone inválido — silencioso
+  }
+}
+
+telefoneInput.addEventListener("blur", recarregarPainelCrm);
+
+crmNomeInput.addEventListener("blur", async () => {
+  if (!contatoAtivo) return;
+  await atualizarNomeContato(contatoAtivo.id, crmNomeInput.value.trim());
+});
+
+crmNovaTagBtn.addEventListener("click", async () => {
+  const nome = crmNovaTagNome.value.trim();
+  const cor = crmNovaTagCor.value;
+  if (!nome) return;
+
+  await criarNovaTag(nome, cor);
+  crmNovaTagNome.value = "";
+  await renderizarTagsDisponiveis();
 });

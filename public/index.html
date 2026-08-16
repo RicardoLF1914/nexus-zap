@@ -79,8 +79,25 @@
       </footer>
     </main>
     <aside class="crm-column">
-      <header class="crm-column__header"></header>
-      <div class="crm-column__body"></div>
+      <header class="crm-column__header">Detalhes do Contato</header>
+      <div class="crm-column__body">
+        <div class="crm-perfil">
+          <div class="crm-perfil__label">Nome</div>
+          <input id="crm-nome-input" class="crm-perfil__nome-input" type="text" placeholder="Sem nome" />
+          <div id="crm-telefone-display" class="crm-perfil__telefone"></div>
+        </div>
+
+        <div class="crm-tags">
+          <div class="crm-perfil__label">Etiquetas</div>
+          <div id="crm-tags-lista" class="crm-tags__lista"></div>
+          <div id="crm-tags-disponiveis" class="crm-tags__disponiveis"></div>
+          <div class="crm-tags__criar">
+            <input id="crm-nova-tag-nome" class="crm-tags__criar-input" type="text" placeholder="Nova etiqueta" />
+            <input id="crm-nova-tag-cor" class="crm-tags__criar-cor" type="color" value="#8B5CF6" />
+            <button id="crm-nova-tag-btn" class="crm-tags__criar-btn">+</button>
+          </div>
+        </div>
+      </div>
     </aside>
   </div>
 

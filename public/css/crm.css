@@ -11,8 +11,103 @@
   flex-shrink: 0;
   height: 60px;
   border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-weight: 600;
 }
 
 .crm-column__body {
   padding: 16px;
+}
+
+.crm-perfil {
+  margin-bottom: 20px;
+}
+
+.crm-perfil__label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.crm-perfil__nome-input {
+  width: 100%;
+  padding: 8px;
+  background-color: var(--bg-card);
+  border-radius: 6px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.crm-perfil__telefone {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.crm-tags {
+  margin-bottom: 16px;
+}
+
+.crm-tags__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.crm-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: white;
+}
+
+.crm-tag__remove {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.crm-tags__disponiveis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.crm-tag--disponivel {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.crm-tags__criar {
+  display: flex;
+  gap: 6px;
+}
+
+.crm-tags__criar-input {
+  flex: 1;
+  padding: 6px 8px;
+  background-color: var(--bg-card);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.crm-tags__criar-cor {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+}
+
+.crm-tags__criar-btn {
+  padding: 6px 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 6px;
+  font-size: 12px;
 }
