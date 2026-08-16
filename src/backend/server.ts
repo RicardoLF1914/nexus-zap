@@ -1,4 +1,5 @@
 import express, { type Request, type Response } from "express";
+import crmRoutes from "./routes/crmRoutes.js";
 import wagoRoutes from "./routes/wagoRoutes";
 import chatRoutes from "./routes/chatRoutes.js";
 import path from "path";
@@ -31,3 +32,5 @@ app.listen(PORT, async () => {
 app.use("/api/wago", wagoRoutes);
 
 app.use("/api/chat", chatRoutes);
+
+app.use("/api/crm", crmRoutes);
