@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Contato, Mensagem, MensagemDirecao, MensagemTipo, Tag } from "../types/index.js";
 
 let client: SupabaseClient | null = null;
 
@@ -20,8 +21,6 @@ export function getSupabaseClient(): SupabaseClient {
 
   return client;
 }
-
-import type { Contato, Mensagem, MensagemDirecao, MensagemTipo } from "../types/index.js";
 
 export async function findOrCreateContato(telefone: string): Promise<Contato> {
   const supabase = getSupabaseClient();
@@ -153,4 +152,71 @@ export async function uploadMidia(
 
   const { data } = supabase.storage.from("Midias").getPublicUrl(caminho);
   return data.publicUrl;
+}
+
+export async function criarTag(nome: string, cor: string): Promise<Tag> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("tags")
+    .insert({ nome, cor })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Tag;
+}
+
+export async function listarTags(): Promise<Tag[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.from("tags").select("*").order("nome");
+
+  if (error) throw error;
+  return data as Tag[];
+}
+
+export async function vincularTag(contatoId: string, tagId: string): Promise<void> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase
+    .from("contato_tags")
+    .insert({ contato_id: contatoId, tag_id: tagId });
+
+  if (error) throw error;
+}
+
+export async function desvincularTag(contatoId: string, tagId: string): Promise<void> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase
+    .from("contato_tags")
+    .delete()
+    .eq("contato_id", contatoId)
+    .eq("tag_id", tagId);
+
+  if (error) throw error;
+}
+
+export async function listarTagsDoContato(contatoId: string): Promise<Tag[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("contato_tags")
+    .select("tags(*)")
+    .eq("contato_id", contatoId);
+
+  if (error) throw error;
+  return (data ?? []).map((row) => row.tags) as unknown as Tag[];
+}
+
+export async function atualizarPerfilContato(
+  contatoId: string,
+  nome: string,
+): Promise<Contato> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("contatos")
+    .update({ nome, updated_at: new Date().toISOString() })
+    .eq("id", contatoId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Contato;
 }
