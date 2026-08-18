@@ -8,6 +8,7 @@ export interface ContatoInfo {
   id: string;
   telefone: string;
   nome: string | null;
+  funil_etapa_id: string | null;
 }
 
 export async function carregarContato(
@@ -53,4 +54,49 @@ export async function atualizarNomeContato(contatoId: string, nome: string): Pro
     body: JSON.stringify({ nome }),
   });
   if (!res.ok) throw new Error("Falha ao atualizar contato");
+}
+
+export interface EtapaInfo {
+  id: string;
+  nome: string;
+  ordem: number;
+  cor: string;
+}
+
+export interface AnotacaoInfo {
+  id: string;
+  conteudo: string;
+  created_at: string;
+}
+
+export async function listarEtapas(): Promise<EtapaInfo[]> {
+  const res = await fetch("/api/crm/etapas");
+  if (!res.ok) throw new Error("Falha ao listar etapas");
+  const data = (await res.json()) as { etapas: EtapaInfo[] };
+  return data.etapas;
+}
+
+export async function atualizarEtapa(contatoId: string, funilEtapaId: string): Promise<void> {
+  const res = await fetch(`/api/crm/contato/${contatoId}/etapa`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ funilEtapaId }),
+  });
+  if (!res.ok) throw new Error("Falha ao atualizar etapa");
+}
+
+export async function criarAnotacaoContato(contatoId: string, conteudo: string): Promise<void> {
+  const res = await fetch(`/api/crm/contato/${contatoId}/anotacoes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ conteudo }),
+  });
+  if (!res.ok) throw new Error("Falha ao criar anotação");
+}
+
+export async function listarAnotacoesContato(contatoId: string): Promise<AnotacaoInfo[]> {
+  const res = await fetch(`/api/crm/contato/${contatoId}/anotacoes`);
+  if (!res.ok) throw new Error("Falha ao listar anotações");
+  const data = (await res.json()) as { anotacoes: AnotacaoInfo[] };
+  return data.anotacoes;
 }

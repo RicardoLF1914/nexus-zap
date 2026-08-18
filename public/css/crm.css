@@ -111,3 +111,67 @@
   border-radius: 6px;
   font-size: 12px;
 }
+
+.crm-funil {
+  margin-bottom: 20px;
+}
+
+.crm-funil__select {
+  width: 100%;
+  padding: 8px;
+  background-color: var(--bg-card);
+  border-radius: 6px;
+  color: var(--text-primary);
+}
+
+.crm-notas {
+  margin-bottom: 16px;
+}
+
+.crm-notas__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.crm-nota {
+  background-color: var(--bg-card);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.crm-nota__data {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.crm-notas__form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crm-notas__textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px;
+  background-color: var(--bg-card);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+  resize: vertical;
+}
+
+.crm-notas__btn {
+  align-self: flex-end;
+  padding: 6px 14px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 6px;
+  font-size: 12px;
+}

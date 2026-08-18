@@ -11,8 +11,13 @@ import {
   vincularTagAoContato,
   desvincularTagDoContato,
   atualizarNomeContato,
+  listarEtapas,
+  atualizarEtapa,
+  criarAnotacaoContato,
+  listarAnotacoesContato,
   type TagInfo,
   type ContatoInfo,
+  type EtapaInfo,
 } from "./components/crmPanel.js";
 
 const modal = document.getElementById("wago-modal") as HTMLDivElement;
@@ -292,7 +297,14 @@ async function recarregarPainelCrm() {
 
     renderizarTagsDoContato();
     await renderizarTagsDisponiveis();
-  } catch {
+
+    await popularSelectDeEtapas();
+    if (contato.funil_etapa_id) {
+      crmEtapaSelect.value = contato.funil_etapa_id;
+    }
+
+    await renderizarAnotacoes();
+  } catch (err) {
     // contato ainda não existe ou telefone inválido — silencioso
   }
 }
@@ -312,4 +324,55 @@ crmNovaTagBtn.addEventListener("click", async () => {
   await criarNovaTag(nome, cor);
   crmNovaTagNome.value = "";
   await renderizarTagsDisponiveis();
+});
+
+const crmEtapaSelect = document.getElementById("crm-etapa-select") as HTMLSelectElement;
+const crmNotasLista = document.getElementById("crm-notas-lista") as HTMLDivElement;
+const crmNotaTexto = document.getElementById("crm-nota-texto") as HTMLTextAreaElement;
+const crmNotaBtn = document.getElementById("crm-nota-btn") as HTMLButtonElement;
+
+let etapasCache: EtapaInfo[] = [];
+
+async function popularSelectDeEtapas() {
+  if (etapasCache.length === 0) {
+    etapasCache = await listarEtapas();
+  }
+
+  crmEtapaSelect.innerHTML = "";
+  for (const etapa of etapasCache) {
+    const option = document.createElement("option");
+    option.value = etapa.id;
+    option.textContent = etapa.nome;
+    crmEtapaSelect.appendChild(option);
+  }
+}
+
+async function renderizarAnotacoes() {
+  if (!contatoAtivo) return;
+
+  const anotacoes = await listarAnotacoesContato(contatoAtivo.id);
+  crmNotasLista.innerHTML = "";
+
+  for (const nota of anotacoes) {
+    const el = document.createElement("div");
+    el.className = "crm-nota";
+    const data = new Date(nota.created_at).toLocaleString("pt-BR");
+    el.innerHTML = `<div class="crm-nota__data">${data}</div>${nota.conteudo}`;
+    crmNotasLista.appendChild(el);
+  }
+}
+
+crmEtapaSelect.addEventListener("change", async () => {
+  if (!contatoAtivo) return;
+  await atualizarEtapa(contatoAtivo.id, crmEtapaSelect.value);
+});
+
+crmNotaBtn.addEventListener("click", async () => {
+  const conteudo = crmNotaTexto.value.trim();
+  if (!contatoAtivo) return;
+  if (!conteudo) return;
+
+  await criarAnotacaoContato(contatoAtivo.id, conteudo);
+  crmNotaTexto.value = "";
+  await renderizarAnotacoes();
 });
