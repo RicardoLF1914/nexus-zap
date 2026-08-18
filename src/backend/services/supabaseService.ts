@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Contato, Mensagem, MensagemDirecao, MensagemTipo, Tag } from "../types/index.js";
+import type { Contato, Mensagem, MensagemDirecao, MensagemTipo, Tag, FunilEtapa, Anotacao } from "../types/index.js";
 
 let client: SupabaseClient | null = null;
 
@@ -219,4 +219,55 @@ export async function atualizarPerfilContato(
 
   if (error) throw error;
   return data as Contato;
+}
+
+export async function listarEtapasFunil(): Promise<FunilEtapa[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.from("funil_etapas").select("*").order("ordem");
+
+  if (error) throw error;
+  return data as FunilEtapa[];
+}
+
+export async function atualizarEtapaContato(
+  contatoId: string,
+  funilEtapaId: string,
+): Promise<Contato> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("contatos")
+    .update({ funil_etapa_id: funilEtapaId, updated_at: new Date().toISOString() })
+    .eq("id", contatoId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Contato;
+}
+
+export async function criarAnotacao(
+  contatoId: string,
+  conteudo: string,
+): Promise<Anotacao> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("anotacoes")
+    .insert({ contato_id: contatoId, conteudo })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Anotacao;
+}
+
+export async function listarAnotacoes(contatoId: string): Promise<Anotacao[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("anotacoes")
+    .select("*")
+    .eq("contato_id", contatoId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data as Anotacao[];
 }
