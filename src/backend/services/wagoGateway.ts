@@ -317,3 +317,17 @@ export async function sendContactVcard(
 
   return (await res.json()) as { id: string };
 }
+
+export async function tentarReiniciarSessao(): Promise<boolean> {
+  const { apiUrl, sessionName } = config();
+
+  try {
+    const res = await fetch(`${apiUrl}/api/sessions/${sessionName}/restart`, {
+      method: "POST",
+      headers: headers(),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
