@@ -1,9 +1,9 @@
-import { obterLocalizacaoAtual } from "./components/locationPicker.js";
-import { sendLocationMessage, sendContactMessage } from "./services/api.js";
-import { criarGravadorDeAudio, type GravacaoConcluida } from "./components/audioRecorder.js";
-import { sendMessage, sendMedia } from "./services/api.js";
-import { criarUploaderDeMidia, type ArquivoSelecionado } from "./components/mediaUploader.js";
+import { mostrarToast } from "./components/toast.js";
 import { connectWhatsapp, getStatus, getQrCode, type SessionInfo } from "./services/api.js";
+import { criarUploaderDeMidia, type ArquivoSelecionado } from "./components/mediaUploader.js";
+import { sendMessage, sendMedia, sendLocationMessage, sendContactMessage } from "./services/api.js";
+import { criarGravadorDeAudio, type GravacaoConcluida } from "./components/audioRecorder.js";
+import { obterLocalizacaoAtual } from "./components/locationPicker.js";
 import {
   carregarContato,
   listarTodasTags,
@@ -19,6 +19,8 @@ import {
   type ContatoInfo,
   type EtapaInfo,
 } from "./components/crmPanel.js";
+
+// ===== Modal de conexão WhatsApp =====
 
 const modal = document.getElementById("wago-modal") as HTMLDivElement;
 const qrImage = document.getElementById("wago-qr-image") as HTMLImageElement;
@@ -58,6 +60,10 @@ async function pollStatus() {
       return; // conectado, para o polling
     }
 
+    if (session.status === "FAILED") {
+      mostrarToast("A conexão com o WhatsApp falhou. Tentando reconectar...", "erro");
+    }
+
     pollTimer = setTimeout(pollStatus, 3000);
   } catch {
     pollTimer = setTimeout(pollStatus, 5000);
@@ -82,6 +88,8 @@ closeModalBtn.addEventListener("click", closeModal);
 getStatus()
   .then((session) => setStatusBadge(session.status))
   .catch(() => setStatusBadge("STOPPED" as SessionInfo["status"]));
+
+// ===== Composer: texto e mídia =====
 
 const telefoneInput = document.getElementById("composer-telefone") as HTMLInputElement;
 const textInput = document.getElementById("composer-text-input") as HTMLInputElement;
@@ -120,42 +128,7 @@ previewRemove.addEventListener("click", () => {
   previewBox.classList.remove("composer__preview--visible");
 });
 
-async function enviar() {
-  const telefone = telefoneInput.value.trim();
-  const texto = textInput.value.trim();
-
-  if (!telefone) {
-    alert("Informe o telefone de destino");
-    return;
-  }
-
-  try {
-    if (gravacaoAtual) {
-      const audioFile = new File([gravacaoAtual.blob], "audio.webm", { type: "audio/webm" });
-      await sendMedia(telefone, audioFile, "");
-      gravacaoAtual = null;
-      audioPreviewBox.classList.remove("composer__audio-preview--visible");
-    } else if (arquivoAtual) {
-      await sendMedia(telefone, arquivoAtual.file, texto);
-      fileInput.value = "";
-      arquivoAtual = null;
-      previewBox.classList.remove("composer__preview--visible");
-    } else if (texto) {
-      await sendMessage(telefone, texto);
-    } else {
-      return;
-    }
-
-    textInput.value = "";
-  } catch {
-    alert("Falha ao enviar. Tente novamente.");
-  }
-}
-
-sendBtn.addEventListener("click", enviar);
-textInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") enviar();
-});
+// ===== Composer: áudio =====
 
 const micBtn = document.getElementById("composer-mic-btn") as HTMLButtonElement;
 const audioPreviewBox = document.getElementById("composer-audio-preview") as HTMLDivElement;
@@ -172,7 +145,7 @@ const gravador = criarGravadorDeAudio(
     audioPreviewBox.classList.add("composer__audio-preview--visible");
   },
   () => {
-    alert("Não foi possível acessar o microfone.");
+    mostrarToast("Não foi possível acessar o microfone.", "erro");
     gravando = false;
     micBtn.classList.remove("composer__mic-btn--recording");
   },
@@ -195,13 +168,54 @@ audioRemoveBtn.addEventListener("click", () => {
   audioPreviewBox.classList.remove("composer__audio-preview--visible");
 });
 
+// ===== Composer: enviar =====
+
+async function enviar() {
+  const telefone = telefoneInput.value.trim();
+  const texto = textInput.value.trim();
+
+  if (!telefone) {
+    mostrarToast("Informe o telefone de destino", "aviso");
+    return;
+  }
+
+  try {
+    if (gravacaoAtual) {
+      const audioFile = new File([gravacaoAtual.blob], "audio.webm", { type: "audio/webm" });
+      await sendMedia(telefone, audioFile, "");
+      gravacaoAtual = null;
+      audioPreviewBox.classList.remove("composer__audio-preview--visible");
+    } else if (arquivoAtual) {
+      await sendMedia(telefone, arquivoAtual.file, texto);
+      fileInput.value = "";
+      arquivoAtual = null;
+      previewBox.classList.remove("composer__preview--visible");
+    } else if (texto) {
+      await sendMessage(telefone, texto);
+    } else {
+      return;
+    }
+
+    textInput.value = "";
+  } catch {
+    mostrarToast("Falha ao enviar. Tente novamente.", "erro");
+  }
+}
+
+sendBtn.addEventListener("click", enviar);
+textInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") enviar();
+});
+
+// ===== Composer: localização e contato =====
+
 const locationBtn = document.getElementById("composer-location-btn") as HTMLButtonElement;
 const contactBtn = document.getElementById("composer-contact-btn") as HTMLButtonElement;
 
 locationBtn.addEventListener("click", async () => {
   const telefone = telefoneInput.value.trim();
   if (!telefone) {
-    alert("Informe o telefone de destino");
+    mostrarToast("Informe o telefone de destino", "aviso");
     return;
   }
 
@@ -209,14 +223,14 @@ locationBtn.addEventListener("click", async () => {
     const { latitude, longitude } = await obterLocalizacaoAtual();
     await sendLocationMessage(telefone, latitude, longitude);
   } catch {
-    alert("Não foi possível obter ou enviar sua localização.");
+    mostrarToast("Não foi possível obter ou enviar sua localização.", "erro");
   }
 });
 
 contactBtn.addEventListener("click", async () => {
   const telefone = telefoneInput.value.trim();
   if (!telefone) {
-    alert("Informe o telefone de destino");
+    mostrarToast("Informe o telefone de destino", "aviso");
     return;
   }
 
@@ -228,9 +242,11 @@ contactBtn.addEventListener("click", async () => {
   try {
     await sendContactMessage(telefone, contatoNome, contatoTelefone);
   } catch {
-    alert("Não foi possível enviar o contato.");
+    mostrarToast("Não foi possível enviar o contato.", "erro");
   }
 });
+
+// ===== Painel CRM: perfil e tags =====
 
 const crmNomeInput = document.getElementById("crm-nome-input") as HTMLInputElement;
 const crmTelefoneDisplay = document.getElementById("crm-telefone-display") as HTMLDivElement;
@@ -283,48 +299,7 @@ async function renderizarTagsDisponiveis() {
   }
 }
 
-async function recarregarPainelCrm() {
-  const telefone = telefoneInput.value.trim();
-  if (!telefone) return;
-
-  try {
-    const { contato, tags } = await carregarContato(telefone);
-    contatoAtivo = contato;
-    tagsDoContatoAtivo = tags;
-
-    crmNomeInput.value = contato.nome ?? "";
-    crmTelefoneDisplay.textContent = contato.telefone;
-
-    renderizarTagsDoContato();
-    await renderizarTagsDisponiveis();
-
-    await popularSelectDeEtapas();
-    if (contato.funil_etapa_id) {
-      crmEtapaSelect.value = contato.funil_etapa_id;
-    }
-
-    await renderizarAnotacoes();
-  } catch (err) {
-    // contato ainda não existe ou telefone inválido — silencioso
-  }
-}
-
-telefoneInput.addEventListener("blur", recarregarPainelCrm);
-
-crmNomeInput.addEventListener("blur", async () => {
-  if (!contatoAtivo) return;
-  await atualizarNomeContato(contatoAtivo.id, crmNomeInput.value.trim());
-});
-
-crmNovaTagBtn.addEventListener("click", async () => {
-  const nome = crmNovaTagNome.value.trim();
-  const cor = crmNovaTagCor.value;
-  if (!nome) return;
-
-  await criarNovaTag(nome, cor);
-  crmNovaTagNome.value = "";
-  await renderizarTagsDisponiveis();
-});
+// ===== Painel CRM: funil e anotações =====
 
 const crmEtapaSelect = document.getElementById("crm-etapa-select") as HTMLSelectElement;
 const crmNotasLista = document.getElementById("crm-notas-lista") as HTMLDivElement;
@@ -368,11 +343,56 @@ crmEtapaSelect.addEventListener("change", async () => {
 });
 
 crmNotaBtn.addEventListener("click", async () => {
-  const conteudo = crmNotaTexto.value.trim();
   if (!contatoAtivo) return;
+  const conteudo = crmNotaTexto.value.trim();
   if (!conteudo) return;
 
   await criarAnotacaoContato(contatoAtivo.id, conteudo);
   crmNotaTexto.value = "";
   await renderizarAnotacoes();
+});
+
+// ===== Painel CRM: carregamento geral =====
+
+async function recarregarPainelCrm() {
+  const telefone = telefoneInput.value.trim();
+  if (!telefone) return;
+
+  try {
+    const { contato, tags } = await carregarContato(telefone);
+    contatoAtivo = contato;
+    tagsDoContatoAtivo = tags;
+
+    crmNomeInput.value = contato.nome ?? "";
+    crmTelefoneDisplay.textContent = contato.telefone;
+
+    renderizarTagsDoContato();
+    await renderizarTagsDisponiveis();
+
+    await popularSelectDeEtapas();
+    if (contato.funil_etapa_id) {
+      crmEtapaSelect.value = contato.funil_etapa_id;
+    }
+
+    await renderizarAnotacoes();
+  } catch {
+    // contato ainda não existe ou telefone inválido — silencioso
+  }
+}
+
+telefoneInput.addEventListener("blur", recarregarPainelCrm);
+
+crmNomeInput.addEventListener("blur", async () => {
+  if (!contatoAtivo) return;
+  await atualizarNomeContato(contatoAtivo.id, crmNomeInput.value.trim());
+});
+
+crmNovaTagBtn.addEventListener("click", async () => {
+  const nome = crmNovaTagNome.value.trim();
+  const cor = crmNovaTagCor.value;
+  if (!nome) return;
+
+  await criarNovaTag(nome, cor);
+  crmNovaTagNome.value = "";
+  await renderizarTagsDisponiveis();
 });
