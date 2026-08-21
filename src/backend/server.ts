@@ -1,4 +1,4 @@
-import express, { type Request, type Response } from "express";
+import express, { type Request, type Response, type NextFunction } from "express";
 import crmRoutes from "./routes/crmRoutes.js";
 import wagoRoutes from "./routes/wagoRoutes";
 import chatRoutes from "./routes/chatRoutes.js";
@@ -12,6 +12,13 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "..", "..", "public")));
+app.use("/api/wago", wagoRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/crm", crmRoutes);
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("Erro não tratado:", err);
+  res.status(500).json({ error: "Erro interno no servidor" });
+});
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", service: "nexus-zap" });
@@ -28,9 +35,3 @@ app.listen(PORT, async () => {
     console.error("Falha ao configurar webhook do WAHA:", (err as Error).message);
   }
 });
-
-app.use("/api/wago", wagoRoutes);
-
-app.use("/api/chat", chatRoutes);
-
-app.use("/api/crm", crmRoutes);
