@@ -6,6 +6,7 @@ import {
   listarContatos,
   listarMensagens,
   uploadMidia,
+  mensagemJaExiste,
 } from "../services/supabaseService.js";
 
 function extrairTelefoneDoPayload(payload: {
@@ -138,35 +139,39 @@ export async function webhookHandler(req: Request, res: Response) {
     if (
       event.event === "message" &&
       event.payload &&
-      !event.payload.fromMe &&
-      !(event.payload.from ?? "").endsWith("@g.us")
+      !(event.payload.from ?? "").includes("@broadcast")
     ) {
-      const telefone = extrairTelefoneDoPayload(event.payload);
-      const contato = await findOrCreateContato(telefone);
+      const jaExiste = event.payload.id ? await mensagemJaExiste(event.payload.id) : false;
 
-      if (event.payload.hasMedia && event.payload.media?.url) {
-        const { buffer, contentType } = await downloadMedia(event.payload.media.url);
-        const nomeArquivo = event.payload.media.filename ?? `midia-${Date.now()}`;
-        const url = await uploadMidia(buffer, nomeArquivo, contentType);
+      if (!jaExiste) {
+        const telefone = extrairTelefoneDoPayload(event.payload);
+        const contato = await findOrCreateContato(telefone);
+        const direcao = event.payload.fromMe ? "saida" : "entrada";
 
-        await salvarMensagem({
-          contato_id: contato.id,
-          direcao: "entrada",
-          tipo: contentType.startsWith("image/") ? "imagem" : "documento",
-          conteudo: event.payload.body ?? "",
-          wago_message_id: event.payload.id,
-          midia_url: url,
-        });
-      } else {
-        const texto = event.payload.body ?? "";
-        if (texto) {
+        if (event.payload.hasMedia && event.payload.media?.url) {
+          const { buffer, contentType } = await downloadMedia(event.payload.media.url);
+          const nomeArquivo = event.payload.media.filename ?? `midia-${Date.now()}`;
+          const url = await uploadMidia(buffer, nomeArquivo, contentType);
+
           await salvarMensagem({
             contato_id: contato.id,
-            direcao: "entrada",
-            tipo: "texto",
-            conteudo: texto,
+            direcao,
+            tipo: contentType.startsWith("image/") ? "imagem" : "documento",
+            conteudo: event.payload.body ?? "",
             wago_message_id: event.payload.id,
+            midia_url: url,
           });
+        } else {
+          const texto = event.payload.body ?? "";
+          if (texto) {
+            await salvarMensagem({
+              contato_id: contato.id,
+              direcao,
+              tipo: "texto",
+              conteudo: texto,
+              wago_message_id: event.payload.id,
+            });
+          }
         }
       }
     }

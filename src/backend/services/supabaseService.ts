@@ -271,3 +271,15 @@ export async function listarAnotacoes(contatoId: string): Promise<Anotacao[]> {
   if (error) throw error;
   return data as Anotacao[];
 }
+
+export async function mensagemJaExiste(wagoMessageId: string): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("mensagens")
+    .select("id")
+    .eq("wago_message_id", wagoMessageId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data !== null;
+}
