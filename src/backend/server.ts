@@ -1,3 +1,5 @@
+import { authMiddleware } from "./middlewares/authMiddleware.js";
+import authRoutes from "./routes/authRoutes.js";
 import express, { type Request, type Response, type NextFunction } from "express";
 import crmRoutes from "./routes/crmRoutes.js";
 import wagoRoutes from "./routes/wagoRoutes";
@@ -11,6 +13,8 @@ const app = express();
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
 app.use(express.json());
+app.use("/api/auth", authRoutes);
+app.use(authMiddleware);
 app.use(express.static(path.join(__dirname, "..", "..", "public")));
 app.use("/api/wago", wagoRoutes);
 app.use("/api/chat", chatRoutes);
