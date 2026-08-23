@@ -33,7 +33,8 @@ app.listen(PORT, async () => {
 
   try {
     const { configureWebhook } = await import("./services/wagoGateway.js");
-    await configureWebhook(`http://host.docker.internal:${PORT}/api/chat/webhook`);
+    const webhookBase = process.env.WEBHOOK_BASE_URL ?? `http://host.docker.internal:${PORT}`;
+    await configureWebhook(`${webhookBase}/api/chat/webhook`);
     console.log("Webhook do WAHA configurado");
   } catch (err) {
     console.error("Falha ao configurar webhook do WAHA:", (err as Error).message);
