@@ -44,10 +44,13 @@
         <span id="wago-status-badge" class="status-badge status-badge--disconnected">Desconectado</span>
         <button id="open-wago-modal">Conectar WhatsApp</button>
       </div>
+      <div id="contact-list" class="contact-list"></div>
     </aside>
     <main class="chat-column">
-      <header class="chat-column__header"></header>
-      <div class="chat-column__messages"></div>
+      <header class="chat-column__header">
+        <div id="chat-header-info" class="chat-column__header-info">Selecione um contato</div>
+      </header>
+      <div id="chat-messages" class="chat-column__messages"></div>
       <footer class="chat-column__composer">
         <div id="composer-preview" class="composer__preview">
           <img id="composer-preview-thumb" class="composer__preview-thumb" alt="Preview" />
@@ -59,23 +62,13 @@
           <button id="composer-audio-remove" class="composer__preview-remove">Remover</button>
         </div>
         <div class="composer">
-          <input
-            id="composer-telefone"
-            class="composer__telefone-input"
-            type="text"
-            placeholder="Telefone destino"
-          />
+          <input id="composer-telefone" class="composer__telefone-input" type="text" placeholder="Telefone destino" />
           <button id="composer-attach-btn" class="composer__attach-btn">📎</button>
           <input id="composer-file-input" type="file" style="display: none" accept="image/*,application/pdf" />
-          <input
-            id="composer-text-input"
-            class="composer__text-input"
-            type="text"
-            placeholder="Digite uma mensagem"
-          />
           <button id="composer-mic-btn" class="composer__mic-btn">🎤</button>
           <button id="composer-location-btn" class="composer__location-btn">📍</button>
           <button id="composer-contact-btn" class="composer__contact-btn">👤</button>
+          <input id="composer-text-input" class="composer__text-input" type="text" placeholder="Digite uma mensagem" />
           <button id="composer-send-btn" class="composer__send-btn">➤</button>
         </div>
       </footer>

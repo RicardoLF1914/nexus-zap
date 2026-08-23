@@ -1,3 +1,5 @@
+import { listarContatosParaLista, type ContatoLista } from "./components/chatList.js";
+import { listarMensagensDoContato, renderizarBolha, type MensagemLista } from "./components/messageWindow.js";
 import { mostrarToast } from "./components/toast.js";
 import { connectWhatsapp, getStatus, getQrCode, type SessionInfo } from "./services/api.js";
 import { criarUploaderDeMidia, type ArquivoSelecionado } from "./components/mediaUploader.js";
@@ -197,6 +199,8 @@ async function enviar() {
     }
 
     textInput.value = "";
+    await carregarMensagens();
+    await carregarListaDeContatos();
   } catch {
     mostrarToast("Falha ao enviar. Tente novamente.", "erro");
   }
@@ -396,3 +400,65 @@ crmNovaTagBtn.addEventListener("click", async () => {
   crmNovaTagNome.value = "";
   await renderizarTagsDisponiveis();
 });
+
+const contactListEl = document.getElementById("contact-list") as HTMLDivElement;
+const chatHeaderInfo = document.getElementById("chat-header-info") as HTMLDivElement;
+const chatMessagesEl = document.getElementById("chat-messages") as HTMLDivElement;
+
+let contatoSelecionadoId: string | null = null;
+let mensagensPollTimer: ReturnType<typeof setInterval> | null = null;
+
+async function carregarListaDeContatos() {
+  try {
+    const contatos = await listarContatosParaLista();
+    contactListEl.innerHTML = "";
+
+    for (const contato of contatos) {
+      const el = document.createElement("div");
+      el.className = "contact-item";
+      if (contato.id === contatoSelecionadoId) el.classList.add("contact-item--ativo");
+      el.innerHTML = `
+        <span class="contact-item__nome">${contato.nome ?? contato.telefone}</span>
+        <span class="contact-item__telefone">${contato.telefone}</span>
+      `;
+      el.addEventListener("click", () => selecionarContato(contato));
+      contactListEl.appendChild(el);
+    }
+  } catch {
+    mostrarToast("Falha ao carregar contatos", "erro");
+  }
+}
+
+async function carregarMensagens() {
+  if (!contatoSelecionadoId) return;
+
+  try {
+    const mensagens = await listarMensagensDoContato(contatoSelecionadoId);
+    const estavaNoFim =
+      chatMessagesEl.scrollHeight - chatMessagesEl.scrollTop <= chatMessagesEl.clientHeight + 50;
+
+    chatMessagesEl.innerHTML = mensagens.map(renderizarBolha).join("");
+
+    if (estavaNoFim) {
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+  } catch {
+    // silencioso — não vale poluir com toast a cada poll
+  }
+}
+
+async function selecionarContato(contato: ContatoLista) {
+  contatoSelecionadoId = contato.id;
+  telefoneInput.value = contato.telefone;
+  chatHeaderInfo.textContent = contato.nome ?? contato.telefone;
+
+  await carregarListaDeContatos();
+  await carregarMensagens();
+  await recarregarPainelCrm();
+
+  if (mensagensPollTimer) clearInterval(mensagensPollTimer);
+  mensagensPollTimer = setInterval(carregarMensagens, 3000);
+}
+
+carregarListaDeContatos();
+setInterval(carregarListaDeContatos, 10000);
