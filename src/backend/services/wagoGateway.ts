@@ -87,6 +87,12 @@ export async function getQrCodeBase64(): Promise<string> {
   return `data:image/png;base64,${buffer.toString("base64")}`;
 }
 
+export function getWebhookUrl(): string {
+  const { apiUrl: _unused } = config();
+  const webhookBase = process.env.WEBHOOK_BASE_URL ?? `http://host.docker.internal:${process.env.PORT ?? 3000}`;
+  return `${webhookBase}/api/chat/webhook`;
+}
+
 export async function configureWebhook(webhookUrl: string): Promise<void> {
   const { apiUrl, sessionName } = config();
   const res = await fetch(`${apiUrl}/api/sessions/${sessionName}`, {

@@ -32,9 +32,8 @@ app.listen(PORT, async () => {
   console.log(`NexusZap server rodando em http://localhost:${PORT}`);
 
   try {
-    const { configureWebhook } = await import("./services/wagoGateway.js");
-    const webhookBase = process.env.WEBHOOK_BASE_URL ?? `http://host.docker.internal:${PORT}`;
-    await configureWebhook(`${webhookBase}/api/chat/webhook`);
+    const { configureWebhook, getWebhookUrl } = await import("./services/wagoGateway.js");
+    await configureWebhook(getWebhookUrl());
     console.log("Webhook do WAHA configurado");
   } catch (err) {
     console.error("Falha ao configurar webhook do WAHA:", (err as Error).message);
